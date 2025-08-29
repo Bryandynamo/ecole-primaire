@@ -1,0 +1,9 @@
+[build]
+  command = "composer install --no-dev --optimize-autoloader && npm install && npm run build && php artisan key:generate --force && php artisan migrate --force && php artisan config:cache && php artisan route:cache && php artisan view:cache"
+  publish = "public"
+
+env = { PHP_ALLOW_URL_FOPEN = "On" }
+
+[context.production.environment]
+  APP_ENV = "production"
+  APP_DEBUG = "false"

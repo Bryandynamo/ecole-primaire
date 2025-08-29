@@ -1,0 +1,21 @@
+{
+  "name": "Registre Enseignant",
+  "short_name": "Registre",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0275d8",
+  "description": "Application registre de notes pour enseignants.",
+  "icons": [
+    {
+      "src": "/vendor/bootstrap/bootstrap-icons-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/vendor/bootstrap/bootstrap-icons-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

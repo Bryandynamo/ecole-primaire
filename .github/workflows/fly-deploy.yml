@@ -1,0 +1,62 @@
+name: Deploy to Fly.io
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+env:
+  FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+
+jobs:
+  deploy:
+    name: Build and Deploy to Fly.io
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: webapp-laravel
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Flyctl
+        uses: superfly/flyctl-actions/setup-flyctl@v1
+
+      - name: Ensure Fly app exists
+        env:
+          APP_NAME: bulletin-laravel-app
+        run: |
+          if ! flyctl apps list --json | jq -r '.[].Name' | grep -q "^${APP_NAME}$"; then
+            flyctl apps create ${APP_NAME}
+          fi
+
+      - name: Ensure APP secrets on Fly
+        env:
+          APP_NAME: bulletin-laravel-app
+          APP_URL: https://bulletin-laravel-app.fly.dev
+        run: |
+          # Generate a Laravel-compatible base64 key (32 bytes)
+          APP_KEY_B64=$(openssl rand -base64 32)
+          # Set/update essential secrets (idempotent)
+          flyctl secrets set \
+            APP_KEY=base64:${APP_KEY_B64} \
+            APP_ENV=production \
+            APP_DEBUG=false \
+            APP_URL=${APP_URL} \
+            --app ${APP_NAME} --detach
+
+      - name: Deploy to Fly.io
+        env:
+          APP_NAME: bulletin-laravel-app
+        run: |
+          # Deploy using the Dockerfile and fly.toml in webapp-laravel/
+          flyctl deploy --remote-only --app ${APP_NAME}
+
+      - name: Run migrations and storage link
+        if: success()
+        env:
+          APP_NAME: bulletin-laravel-app
+        run: |
+          # Run Laravel maintenance commands on the machine
+          flyctl ssh console --app ${APP_NAME} -C "php artisan migrate --force || true"
+          flyctl ssh console --app ${APP_NAME} -C "php artisan storage:link || true"

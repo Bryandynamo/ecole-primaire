@@ -1,0 +1,9 @@
+/* Bulletin Excel-like layout */
+body { font-family: "Times New Roman", serif; font-size: 10pt; }
+.table-bulletin { border-collapse: collapse; width: 100%; }
+.table-bulletin th, .table-bulletin td { border: 0.5pt solid #000; padding: 2px 3px; text-align: center; }
+.vertical-text { writing-mode: vertical-rl; transform: rotate(180deg); font-weight: bold; }
+.bg-light { background:#f2f2f2; }
+.text-bold { font-weight:bold; }
+.small { font-size:9pt; }
+.uacol { width: 40px; }
