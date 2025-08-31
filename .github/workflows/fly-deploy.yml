@@ -22,11 +22,19 @@ jobs:
       - name: Setup Flyctl
         uses: superfly/flyctl-actions/setup-flyctl@v1
 
+      - name: Check FLY_API_TOKEN is present
+        run: |
+          if [ -z "${FLY_API_TOKEN}" ]; then
+            echo "::error::Missing FLY_API_TOKEN GitHub secret. Add it in Settings > Secrets and variables > Actions";
+            exit 1;
+          fi
+
       - name: Ensure Fly app exists
         env:
           APP_NAME: bulletin-laravel-app
         run: |
-          if ! flyctl apps list --json | jq -r '.[].Name' | grep -q "^${APP_NAME}$"; then
+          # If app doesn't exist, create it (apps show exits non-zero if missing)
+          if ! flyctl apps show ${APP_NAME} >/dev/null 2>&1; then
             flyctl apps create ${APP_NAME}
           fi
 
