@@ -1,4 +1,4 @@
-app = "bulletin-laravel-app"
+app = "ecole-primaire-bryandynamo"
 primary_region = "cdg"
 
 [build]

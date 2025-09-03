@@ -26,9 +26,25 @@ jobs:
             exit 1;
           fi
 
+      - name: Locate fly.toml and export APP_NAME
+        id: find_config
+        run: |
+          if [ -f "fly.toml" ]; then
+            echo "CONFIG=fly.toml" >> $GITHUB_ENV
+            APP_NAME=$(awk -F '"' '/^app\s*=/{print $2}' fly.toml)
+          elif [ -f "webapp-laravel/fly.toml" ]; then
+            echo "CONFIG=webapp-laravel/fly.toml" >> $GITHUB_ENV
+            APP_NAME=$(awk -F '"' '/^app\s*=/{print $2}' webapp-laravel/fly.toml)
+          else
+            echo "::error::fly.toml introuvable à la racine ni dans webapp-laravel/"; exit 1
+          fi
+          if [ -z "$APP_NAME" ]; then
+            echo "::error::Impossible de lire 'app' dans fly.toml"; exit 1
+          fi
+          echo "APP_NAME=$APP_NAME" >> $GITHUB_ENV
+          echo "APP_URL=https://$APP_NAME.fly.dev" >> $GITHUB_ENV
+
       - name: Ensure Fly app exists
-        env:
-          APP_NAME: bulletin-laravel-app
         run: |
           # If app doesn't exist, create it (apps show exits non-zero if missing)
           if ! flyctl apps show ${APP_NAME} >/dev/null 2>&1; then
@@ -36,9 +52,6 @@ jobs:
           fi
 
       - name: Ensure APP secrets on Fly
-        env:
-          APP_NAME: bulletin-laravel-app
-          APP_URL: https://bulletin-laravel-app.fly.dev
         run: |
           # Generate a Laravel-compatible base64 key (32 bytes)
           APP_KEY_B64=$(openssl rand -base64 32)
@@ -51,16 +64,12 @@ jobs:
             --app ${APP_NAME} --detach
 
       - name: Deploy to Fly.io
-        env:
-          APP_NAME: bulletin-laravel-app
         run: |
-          # Deploy using the Dockerfile and fly.toml in webapp-laravel/
-          flyctl deploy --remote-only --app ${APP_NAME}
+          # Deploy using the Dockerfile and the resolved fly.toml
+          flyctl deploy --remote-only --app ${APP_NAME} --config "${CONFIG}"
 
       - name: Run migrations and storage link
         if: success()
-        env:
-          APP_NAME: bulletin-laravel-app
         run: |
           # Run Laravel maintenance commands on the machine
           flyctl ssh console --app ${APP_NAME} -C "php artisan migrate --force || true"
