@@ -12,9 +12,6 @@ jobs:
   deploy:
     name: Build and Deploy to Fly.io
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: webapp-laravel
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
